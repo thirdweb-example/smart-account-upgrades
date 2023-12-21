@@ -85,6 +85,7 @@ const main = async () => {
         },
         functions: extensionFunctions,
       },
+      extensionAbi: NFTAllowlistAbi,
     });
     console.log("Transaction complete!", tx.transactionHash);
 
