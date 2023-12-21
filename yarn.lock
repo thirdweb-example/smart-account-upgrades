@@ -468,6 +468,17 @@
     "@thirdweb-dev/dynamic-contracts" "^1.1.2"
     erc721a-upgradeable "^3.3.0"
 
+"@thirdweb-dev/contracts@^3.11.0":
+  version "3.11.0"
+  resolved "https://registry.yarnpkg.com/@thirdweb-dev/contracts/-/contracts-3.11.0.tgz#3ce5770367595d701e1000685e2d7c20fde30c7f"
+  integrity sha512-qCD/KQUvMbKrUh/ksPN7jyqADtcolX5qDpBqGKiQ3p/ARJDNkYLtafOUDK+3vAzTYQvusE8X41M/7YySfSzxzA==
+  dependencies:
+    "@chainlink/contracts" "^0.6.1"
+    "@openzeppelin/contracts" "4.7.3"
+    "@openzeppelin/contracts-upgradeable" "4.7.3"
+    "@thirdweb-dev/dynamic-contracts" "^1.1.2"
+    erc721a-upgradeable "^3.3.0"
+
 "@thirdweb-dev/crypto@0.2.0":
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@thirdweb-dev/crypto/-/crypto-0.2.0.tgz#ad629854107b58647101fc6f3d2bbe619ae34424"

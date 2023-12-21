@@ -4,8 +4,72 @@
 
 // config();
 
+import { Abi, AbiSchema } from "@thirdweb-dev/sdk";
+import { utils, BytesLike, ContractInterface } from "ethers";
+
+import AccountExtensionAbi from "./test/scripts/AccountExtension.json";
+
+interface ExtensionFunction {
+  functionSelector: BytesLike;
+  functionSignature: string;
+}
+
+function getFunctionSignature(fnInputs: any): string {
+  return (
+    "(" +
+    fnInputs
+      .map((i: any) => {
+        return i.type === "tuple"
+          ? getFunctionSignature(i.components)
+          : i.type === "tuple[]"
+          ? getFunctionSignature(i.components) + `[]`
+          : i.type;
+      })
+      .join(",") +
+    ")"
+  );
+}
+
+function generateExtensionFunctions(extensionAbi: Abi): ExtensionFunction[] {
+  const extensionInterface = new utils.Interface(extensionAbi);
+  const extensionFunctions: ExtensionFunction[] = [];
+  // TODO - filter out common functions like _msgSender(), contractType(), etc.
+
+  for (const fnFragment of Object.values(extensionInterface.functions)) {
+    const fn = extensionInterface.getFunction(
+      extensionInterface.getSighash(fnFragment)
+    );
+    if (fn.name.startsWith("_")) {
+      continue;
+    }
+    extensionFunctions.push({
+      functionSelector: extensionInterface.getSighash(fn),
+      functionSignature: fn.name + getFunctionSignature(fn.inputs),
+    });
+  }
+  return extensionFunctions;
+}
+
 const main = async () => {
   console.log("Hello world");
+  const accountExtensionFunctions = generateExtensionFunctions(
+    AbiSchema.parse(AccountExtensionAbi)
+  );
+
+  accountExtensionFunctions.push({
+    functionSelector: "0x00000000",
+    functionSignature: "receive()",
+  });
+
+  accountExtensionFunctions.forEach((fn, i) => {
+    if (fn.functionSignature === "receive()") {
+      console.log("FOUND RECEIVE");
+    }
+
+    console.log(`Function ${i}:`);
+    console.log(fn.functionSelector);
+    console.log(fn.functionSignature);
+  });
   // if (!process.env.WALLET_PRIVATE_KEY) {
   //   throw new Error("No private key found");
   // }

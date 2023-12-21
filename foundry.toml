@@ -2,6 +2,7 @@
 src = "src"
 out = "out"
 libs = ["node_modules", "lib"]
+ffi = true
 remappings = [
     "@thirdweb-dev/=node_modules/@thirdweb-dev/",
     "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/"
