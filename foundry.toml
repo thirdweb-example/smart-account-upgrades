@@ -4,6 +4,7 @@ out = "out"
 libs = ["node_modules", "lib"]
 remappings = [
     "@thirdweb-dev/=node_modules/@thirdweb-dev/",
+    "@openzeppelin/contracts/=node_modules/@openzeppelin/contracts/"
 ]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
