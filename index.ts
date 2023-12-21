@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { ThirdwebSDK, Abi, AbiSchema } from "@thirdweb-dev/sdk";
+import { Goerli } from "@thirdweb-dev/chains";
 import { utils, BytesLike } from "ethers";
 
 import NFTAllowlistAbi from "./abi/NFTAllowlistAbi.json";
@@ -24,14 +25,14 @@ const main = async () => {
     // Instantiate SDK
     const sdk = ThirdwebSDK.fromPrivateKey(
       process.env.WALLET_PRIVATE_KEY,
-      "mumbai",
+      Goerli,
       {
         secretKey: process.env.THIRDWEB_SECRET_KEY,
       }
     );
 
     // PASTE ADDRESS OF YOUR MANAGED ACCOUNT FACTORY HERE
-    const managedFactoryAddress = "";
+    const managedFactoryAddress = "0x069c693687ce96636303e68b3507688cbcc9c426";
     console.log("Upgrading ManagedAccountFactory: ", managedFactoryAddress);
 
     // Get ManagedAccountFactory contract instance with the ExtensionManager ABI
@@ -43,12 +44,14 @@ const main = async () => {
     // Get `NFTAllowlist` functions (selector + signature)
     const extensionFunctions = generateExtensionFunctions(
       AbiSchema.parse(NFTAllowlistAbi)
-    ).map((fn) => {
-      return {
-        functionSelector: fn.functionSelector as string,
-        functionSignature: fn.functionSignature as string,
-      };
-    });
+    )
+      .map((fn) => {
+        return {
+          functionSelector: fn.functionSelector as string,
+          functionSignature: fn.functionSignature as string,
+        };
+      })
+      .filter((fn) => !fn.functionSignature.includes("supportsInterface"));
 
     // Step 1. Disable the existing `onERC721Received`, `onERC1155Received` and `onERC1155BatchReceived` from the `AccountExtension` default extension.
     //         This is required to avoid conflicts with the new extension we are adding.
@@ -68,9 +71,7 @@ const main = async () => {
           "disableFunctionInExtension",
           ["AccountExtension", fn.functionSelector]
         );
-        console.log("Transaction: ", tx.hash);
-        await tx.wait();
-        console.log("Transaction complete!");
+        console.log("Transaction: ", tx);
       }
     }
 
@@ -81,7 +82,7 @@ const main = async () => {
         metadata: {
           name: "NFTAllowlist",
           metadataURI: "",
-          implementation: "", // PASTE NFTALLOWLIST IMPLEMENTATION ADDRESS HERE
+          implementation: "0xACD4a7C1D7C2d3b9FcF5441a923aA914229D56C1", // PASTE NFTALLOWLIST IMPLEMENTATION ADDRESS HERE
         },
         functions: extensionFunctions,
       },
