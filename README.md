@@ -9,7 +9,7 @@ account-upgrade-examples
 |
 |-- src: "extension contracts used for upgrades to smart accounts"
 |
-|-- test: "tests illustrating an upgrade method and account functionality pre and post upgrade."
+|-- test: "tests illustrating an upgrade method and account functionality pre/post upgrade."
 |
 |-- scripts: "scripts you can run that perform the upgrades showcased in tests"
 ```
