@@ -1,34 +1,102 @@
-// import { config } from "dotenv";
-// import { ThirdwebSDK } from "@thirdweb-dev/sdk";
-// import { readFileSync } from "fs";
+import { config } from "dotenv";
+import { ThirdwebSDK, Abi, AbiSchema } from "@thirdweb-dev/sdk";
+import { utils, BytesLike } from "ethers";
 
-// config();
+import NFTAllowlistAbi from "./abi/NFTAllowlistAbi.json";
+import ExtensionManagerAbi from "./abi/ExtensionManagerAbi.json";
 
-import { Abi, AbiSchema } from "@thirdweb-dev/sdk";
-import { utils, BytesLike, ContractInterface } from "ethers";
-
-import AccountExtensionAbi from "./test/scripts/AccountExtension.json";
+config();
 
 interface ExtensionFunction {
   functionSelector: BytesLike;
   functionSignature: string;
 }
 
-function getFunctionSignature(fnInputs: any): string {
-  return (
-    "(" +
-    fnInputs
-      .map((i: any) => {
-        return i.type === "tuple"
-          ? getFunctionSignature(i.components)
-          : i.type === "tuple[]"
-          ? getFunctionSignature(i.components) + `[]`
-          : i.type;
-      })
-      .join(",") +
-    ")"
-  );
-}
+const main = async () => {
+  if (!process.env.WALLET_PRIVATE_KEY) {
+    throw new Error("No private key found");
+  }
+  if (!process.env.THIRDWEB_SECRET_KEY) {
+    throw new Error("No secret key found");
+  }
+
+  try {
+    // Instantiate SDK
+    const sdk = ThirdwebSDK.fromPrivateKey(
+      process.env.WALLET_PRIVATE_KEY,
+      "mumbai",
+      {
+        secretKey: process.env.THIRDWEB_SECRET_KEY,
+      }
+    );
+
+    // PASTE ADDRESS OF YOUR MANAGED ACCOUNT FACTORY HERE
+    const managedFactoryAddress = "";
+    console.log("Upgrading ManagedAccountFactory: ", managedFactoryAddress);
+
+    // Get ManagedAccountFactory contract instance with the ExtensionManager ABI
+    const managedFactoryContract = await sdk.getContractFromAbi(
+      managedFactoryAddress,
+      ExtensionManagerAbi
+    );
+
+    // Get `NFTAllowlist` functions (selector + signature)
+    const extensionFunctions = generateExtensionFunctions(
+      AbiSchema.parse(NFTAllowlistAbi)
+    ).map((fn) => {
+      return {
+        functionSelector: fn.functionSelector as string,
+        functionSignature: fn.functionSignature as string,
+      };
+    });
+
+    // Step 1. Disable the existing `onERC721Received`, `onERC1155Received` and `onERC1155BatchReceived` from the `AccountExtension` default extension.
+    //         This is required to avoid conflicts with the new extension we are adding.
+
+    for (const fn of extensionFunctions) {
+      const toDisable =
+        fn.functionSignature ===
+          "onERC721Received(address,address,uint256,bytes)" ||
+        fn.functionSignature ===
+          "onERC1155Received(address,address,uint256,uint256,bytes)" ||
+        fn.functionSignature ===
+          "onERC1155BatchReceived(address,address,uint256[],uint256[],bytes)";
+
+      if (toDisable) {
+        console.log(`Disabling function ${fn.functionSignature.split("(")[0]}`);
+        const tx = await managedFactoryContract.call(
+          "disableFunctionInExtension",
+          ["AccountExtension", fn.functionSelector]
+        );
+        console.log("Transaction: ", tx.hash);
+        await tx.wait();
+        console.log("Transaction complete!");
+      }
+    }
+
+    // Step 2. Add the new `NFTAllowlist` extension to the account.
+    console.log("Adding NFTAllowlist extension...");
+    const tx = await managedFactoryContract.extensions.add({
+      extension: {
+        metadata: {
+          name: "NFTAllowlist",
+          metadataURI: "",
+          implementation: "", // PASTE NFTALLOWLIST IMPLEMENTATION ADDRESS HERE
+        },
+        functions: extensionFunctions,
+      },
+    });
+    console.log("Transaction complete!", tx.transactionHash);
+
+    console.log("Upgrade done!");
+  } catch (e) {
+    console.error("Something went wrong: ", e);
+  }
+};
+
+main();
+
+/////////////////////////// Utility functions ///////////////////////////
 
 function generateExtensionFunctions(extensionAbi: Abi): ExtensionFunction[] {
   const extensionInterface = new utils.Interface(extensionAbi);
@@ -50,65 +118,18 @@ function generateExtensionFunctions(extensionAbi: Abi): ExtensionFunction[] {
   return extensionFunctions;
 }
 
-const main = async () => {
-  console.log("Hello world");
-  const accountExtensionFunctions = generateExtensionFunctions(
-    AbiSchema.parse(AccountExtensionAbi)
+function getFunctionSignature(fnInputs: any): string {
+  return (
+    "(" +
+    fnInputs
+      .map((i: any) => {
+        return i.type === "tuple"
+          ? getFunctionSignature(i.components)
+          : i.type === "tuple[]"
+          ? getFunctionSignature(i.components) + `[]`
+          : i.type;
+      })
+      .join(",") +
+    ")"
   );
-
-  accountExtensionFunctions.push({
-    functionSelector: "0x00000000",
-    functionSignature: "receive()",
-  });
-
-  accountExtensionFunctions.forEach((fn, i) => {
-    if (fn.functionSignature === "receive()") {
-      console.log("FOUND RECEIVE");
-    }
-
-    console.log(`Function ${i}:`);
-    console.log(fn.functionSelector);
-    console.log(fn.functionSignature);
-  });
-  // if (!process.env.WALLET_PRIVATE_KEY) {
-  //   throw new Error("No private key found");
-  // }
-  // try {
-  //   const sdk = ThirdwebSDK.fromPrivateKey(
-  //     process.env.WALLET_PRIVATE_KEY,
-  //     "mumbai",
-  //     {
-  //       secretKey: process.env.THIRDWEB_SECRET_KEY,
-  //     }
-  //   );
-  //   const contractAddress = await sdk.deployer.deployNFTDrop({
-  //     name: "My Drop",
-  //     primary_sale_recipient: "0x39Ab29fAfb5ad19e96CFB1E1c492083492DB89d4",
-  //   });
-  //   console.log("Contract address: ", contractAddress);
-  //   const contract = await sdk.getContract(contractAddress, "nft-drop");
-  //   const metadatas = [
-  //     {
-  //       name: "Blue Star",
-  //       description: "A blue star NFT",
-  //       image: readFileSync("assets/blue-star.png"),
-  //     },
-  //     {
-  //       name: "Red Star",
-  //       description: "A red star NFT",
-  //       image: readFileSync("assets/red-star.png"),
-  //     },
-  //     {
-  //       name: "Yellow Star",
-  //       description: "A yellow star NFT",
-  //       image: readFileSync("assets/yellow-star.png"),
-  //     },
-  //   ];
-  //   await contract.createBatch(metadatas);
-  //   console.log("Created batch successfully!");
-  // } catch (e) {
-  //   console.error("Something went wrong: ", e);
-  // }
-};
-
-main();
+}
