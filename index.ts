@@ -8,6 +8,19 @@ import ExtensionManagerAbi from "./abi/ExtensionManagerAbi.json";
 
 config();
 
+/**
+ *  This script upgrades the ManagedAccountFactory contract to add the NFTAllowlist extension.
+ *
+ *  The NFTAllowlist extension overrides the NFT callback functions (`onERC721Received`, `onERC1155Received` and `onERC1155BatchReceived`)
+ *  to allow accounts to only receive NFTs allowlisted by the managed factory admin.
+ *
+ *  Upgrade steps:
+ *    1. Disable the existing `onERC721Received`, `onERC1155Received` and `onERC1155BatchReceived` from the `AccountExtension` default
+ *       extension. This is required to avoid function conflicts with the new extension we are adding -- via calling `disableFunctionInExtension`.
+ *
+ *    2. Add the new `NFTAllowlist` extension to the account -- via calling `contract.extensions.add` method.
+ */
+
 interface ExtensionFunction {
   functionSelector: BytesLike;
   functionSignature: string;
