@@ -26,6 +26,9 @@ Install dependencies
 
 ```bash
 yarn install
+```
+
+```bash
 forge install
 ```
 
