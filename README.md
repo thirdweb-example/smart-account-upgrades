@@ -65,9 +65,16 @@ Allow accounts created on your app to only receive and own only in-app / approve
 
 2. Add `NFTAllowlist` as an extension to the smart account by calling `ManagedAccount.addExtension`.
 
-## Core concepts: primer on dynamic contracts
+## Writing upgrades for your smart account
 
-The dynamic and managed account contracts both use the [dynamic contract pattern](https://github.com/thirdweb-dev/dynamic-contracts). Here’s a quick primer: An “upgradeable contract” is an implementation contract + a proxy contract.
+The Managed and Dynamic variety of smart accounts are upgradeable. Writing upgrades for these smart accounts comes down to understanding:
+
+1. How upgrades work for dynamic contracts.
+2. The difference in the upgrade-setup for managed and dynamic smart accounts.
+3. Writing extension smart contracts that contain the logic to add to the account.
+4. Using the dynamic contracts API to perform your the upgrade.
+
+### [ I ] Primer on dynamic contracts
 
 ![A proxy contract that forwards all calls to a single implementation contract](https://ipfs.io/ipfs/QmdzTiw5YuaMa1rjBtoyDuGHHRLdi9Afmh2Tu9Rjj1XuoA/proxy-with-single-impl.png)
 
@@ -82,6 +89,76 @@ This router contract is a proxy, but instead of always delegateCall-ing the same
 A router stores a map from function selectors → to the implementation contract where the given function is implemented. “Upgrading a contract” now simply means updating what implementation contract a given function, or functions are mapped to.
 
 ![Upgrading a contract means updating what implementation a given function, or functions are mapped to](https://ipfs.io/ipfs/QmUWk4VrFsAQ8gSMvTKwPXptJiMjZdihzUNhRXky7VmgGz/router-upgrades.png)
+
+### [ II ] Difference between Managed and Dynamic account upgrades
+
+**Dynamic accounts:**
+
+The `DynamicAccount` account smart contract is written in the dynamic contract pattern and inherits the router contract mentioned previously. This means that for each individual `DynamicAccount` account created via a `DynamicAccountFactory` -- the admin of a given account decides what upgrades to make to their own individual account.
+
+**Managed Accounts:**
+
+Like the dynamic accounts, the `ManagedAccount` account contract is also written in the dynamic contract pattern.
+
+The main difference between these two types of account contracts is that each individual dynamic account stores its own map of function selectors → to extension contracts, whereas all managed account contracts listen into the same map stored by their parent ManagedAccountFactory factory contracts.
+
+![Managed versus dynamic account routers](https://ipfs.io/ipfs/QmUeHD3FEXAexJL5WiZ9jaBZ7UH7SWmv8sJoQEhisupSZb/smart-wallet-diag-7.png)
+
+This is why managed accounts are called “managed”. An admin of the managed account factory contracts is responsible for managing the capabilities of the factory’s children managed accounts.
+
+When an admin of a managed account factory updates the function selector → extension map in the factory contract (through), this upgrade is instantly applied to all of the factory’s children account contracts.
+
+### Writing extension smart contracts
+
+For boilerplate code of an extension smart contract, run the following in your contracts project:
+
+```bash
+thirdweb create --extension
+```
+
+An `Extension` contract is written like any other smart contract, except that its state must be defined using a `struct` within a `library` and at a well defined storage location. This storage technique is known as [storage structs](https://mirror.xyz/horsefacts.eth/EPB4o-eyDl0N8gu0gEz1uw7BTITheaZUqIAOEK1m-jE).
+
+**Example:** `NFTAllowlistStorage` defines the storage layout for the `NFTAllowlist` contract.
+
+```solidity
+// SPDX-License-Identifier: Apache 2.0
+pragma solidity ^0.8.0;
+
+/// @author thirdweb
+
+library NFTAllowlistStorage {
+    /// @custom:storage-location erc7201:nft.allowlist.storage
+    /// @dev keccak256(abi.encode(uint256(keccak256("nft.allowlist.storage")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 internal constant NFT_ALLOWLIST_STORAGE_POSITION =  keccak256(abi.encode(uint256(keccak256("nft.allowlist.storage")) - 1)) & ~bytes32(uint256(0xff));
+
+    struct Data {
+        mapping(address => bool) allowlisted;
+    }
+
+    function data() internal pure returns (Data storage s) {
+        bytes32 loc = NFT_ALLOWLIST_STORAGE_POSITION;
+        assembly {
+            s.slot := loc
+        }
+    }
+}
+```
+
+Each `Extension` of a router must occupy a unique, unused storage location. This is important to ensure that state updates defined in one `Extension` doesn't conflict with the state updates defined in another `Extension`, leading to corrupted state.
+
+Find an in-depth explanation of extensions in [this post](https://github.com/thirdweb-dev/dynamic-contracts?tab=readme-ov-file#getting-started).
+
+### [ IV ] Performing an upgrade
+
+The `ManagedAccountFactory` and `DynamicAccount` contracts implement the [ExtensionManager API](https://github.com/thirdweb-dev/dynamic-contracts?tab=readme-ov-file#extensionmanager). This API exposes the following methdods for performing upgrades:
+
+- [addExtension](https://github.com/thirdweb-dev/dynamic-contracts?tab=readme-ov-file#addextension): add a new extension to the account. All calls to functions specified in this extension will be routed to the implementation provided along with this extension.
+- [replaceExtension](https://github.com/thirdweb-dev/dynamic-contracts?tab=readme-ov-file#replaceextension): replace an existing extension of the account. This replaces all of the extension's data stored on the contract with the provided input -- this includes all functions and the implementation associated with the extension.
+- [removeExtension](https://github.com/thirdweb-dev/dynamic-contracts?tab=readme-ov-file#removeextension): remove an existing extension of the account. This deletes the extension namespace and all extension data from the contract.
+- [disableFunctionInExtension](https://github.com/thirdweb-dev/dynamic-contracts?tab=readme-ov-file#disablefunctioninextension): deletes the map of a specific function to the given extension's implementation.
+- [enableFunctionInExtension](https://github.com/thirdweb-dev/dynamic-contracts?tab=readme-ov-file#enablefunctioninextension): maps a specific extension to the given extension's implementation.
+
+All examples in this repo use a combination of these functions to perform an upgrade.
 
 ## Authors
 
