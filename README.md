@@ -108,7 +108,7 @@ This is why managed accounts are called “managed”. An admin of the managed a
 
 When an admin of a managed account factory updates the function selector → extension map in the factory contract (through), this upgrade is instantly applied to all of the factory’s children account contracts.
 
-### Writing extension smart contracts
+### [ III ] Writing extension smart contracts
 
 For boilerplate code of an extension smart contract, run the following in your contracts project:
 
