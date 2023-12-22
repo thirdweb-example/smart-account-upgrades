@@ -12,29 +12,6 @@ account-upgrade-examples
 |-- scripts: "scripts you can run that perform the upgrades showcased in tests"
 ```
 
-## Examples
-
-### NFTAllowlist
-
-- Contract: [`src/NFTAllowlist.sol`](https://github.com/thirdweb-example/smart-account-upgrades/blob/main/src/NFTAllowlist.sol)
-- Test: [`test/AccountUpgradeNFTAllowlist.t.sol`](https://github.com/thirdweb-example/smart-account-upgrades/blob/main/test/AccountUpgradedNFTAllowlist.t.sol)
-- Upgrade script: [`scripts/accountUpgradeNFTAllowlist.ts`](https://github.com/thirdweb-example/smart-account-upgrades/blob/main/scripts/accountUpgradeNftAllowlist.ts)
-
-This extension (`NFTAllowlist`) allows the account admin to configure an allowlist of NFTs that the account is allowed to receive.
-
-On transferring an NFT to an account (smart contract) via the `safeTransferFrom` method, the NFT contracts calls the `onERC721Received` / `onERC1155Received` methods. This extension overrides these methods to check if the caller is included in the mentioned allowlist.
-
-**Example use case:**
-Allow accounts created on your app to only receive and own only in-app / approved NFTs.
-
-**Upgrade steps:**
-
-1. Disable `onERC721Received`, `onERC1155Received` and `onERC1155BatchReceived` functions on the `AccountExtension` _default_ extension by calling `ManagedAccountFactory.disableFunctionInExtension`.
-
-   This is to prevent conflicts when adding the `NFTAllowlist` extension where we define the updated NFT callback functions we want active in the smart account.
-
-2. Add `NFTAllowlist` as an extension to the smart account by calling `ManagedAccount.addExtension`.
-
 ## Using This Repo
 
 Clone this repoitory
@@ -64,6 +41,29 @@ Perform an upgrade on a managed / dynamic account factory
 ```bash
 ts-node scripts/{upgrade-script-name}.ts
 ```
+
+## Examples
+
+### NFTAllowlist
+
+- Contract: [`src/NFTAllowlist.sol`](https://github.com/thirdweb-example/smart-account-upgrades/blob/main/src/NFTAllowlist.sol)
+- Test: [`test/AccountUpgradeNFTAllowlist.t.sol`](https://github.com/thirdweb-example/smart-account-upgrades/blob/main/test/AccountUpgradedNFTAllowlist.t.sol)
+- Upgrade script: [`scripts/accountUpgradeNFTAllowlist.ts`](https://github.com/thirdweb-example/smart-account-upgrades/blob/main/scripts/accountUpgradeNftAllowlist.ts)
+
+This extension (`NFTAllowlist`) allows the account admin to configure an allowlist of NFTs that the account is allowed to receive.
+
+On transferring an NFT to an account (smart contract) via the `safeTransferFrom` method, the NFT contracts calls the `onERC721Received` / `onERC1155Received` methods. This extension overrides these methods to check if the caller is included in the mentioned allowlist.
+
+**Example use case:**
+Allow accounts created on your app to only receive and own only in-app / approved NFTs.
+
+**Upgrade steps:**
+
+1. Disable `onERC721Received`, `onERC1155Received` and `onERC1155BatchReceived` functions on the `AccountExtension` _default_ extension by calling `ManagedAccountFactory.disableFunctionInExtension`.
+
+   This is to prevent conflicts when adding the `NFTAllowlist` extension where we define the updated NFT callback functions we want active in the smart account.
+
+2. Add `NFTAllowlist` as an extension to the smart account by calling `ManagedAccount.addExtension`.
 
 ## Core concepts: primer on dynamic contracts
 
