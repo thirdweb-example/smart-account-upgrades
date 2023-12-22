@@ -12,6 +12,17 @@ account-upgrade-examples
 |-- scripts: "scripts you can run that perform the upgrades showcased in tests"
 ```
 
+- [Using This Repo](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#using-this-repo)
+- [Examples](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#examples)
+  - [NFTAllowlist](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#nftallowlist)
+- [Writing upgrades for you smart account](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#writing-upgrades-for-your-smart-account)
+  - [Primer on dynamic contracts](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#-i--primer-on-dynamic-contracts)
+  - [Difference between Managed and Dynamic account upgrades](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#-ii--difference-between-managed-and-dynamic-account-upgrades)
+  - [Writing extension smart contracts](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#-iii--writing-extension-smart-contracts)
+  - [Performing an upgrade](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#-iv--performing-an-upgrade)
+- [Authors](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#authors)
+- [License](https://github.com/thirdweb-example/smart-account-upgrades?tab=readme-ov-file#license)
+
 ## Using This Repo
 
 Clone this repoitory
