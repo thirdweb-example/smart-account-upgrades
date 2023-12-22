@@ -24,6 +24,9 @@ This extension (`NFTAllowlist`) allows the account admin to configure an allowli
 
 On transferring an NFT to an account (smart contract) via the `safeTransferFrom` method, the NFT contracts calls the `onERC721Received` / `onERC1155Received` methods. This extension overrides these methods to check if the caller is included in the mentioned allowlist.
 
+**Example use case:**
+Allow accounts created on your app to only receive and own only in-app / approved NFTs.
+
 **Upgrade steps:**
 
 1. Disable `onERC721Received`, `onERC1155Received` and `onERC1155BatchReceived` functions on the `AccountExtension` _default_ extension by calling `ManagedAccountFactory.disableFunctionInExtension`.
