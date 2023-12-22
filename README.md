@@ -28,9 +28,9 @@ On transferring an NFT to an account (smart contract) via the `safeTransferFrom`
 
 1. Disable `onERC721Received`, `onERC1155Received` and `onERC1155BatchReceived` functions on the `AccountExtension` _default_ extension by calling `ManagedAccountFactory.disableFunctionInExtension`.
 
-This is to prevent conflicts when adding the `NFTAllowlist` extension where we define the updated NFT callback functions we want active in the smart account.
+   This is to prevent conflicts when adding the `NFTAllowlist` extension where we define the updated NFT callback functions we want active in the smart account.
 
-1. Add `NFTAllowlist` as an extension to the smart account by calling `ManagedAccount.addExtension`.
+2. Add `NFTAllowlist` as an extension to the smart account by calling `ManagedAccount.addExtension`.
 
 ## Using This Repo
 
